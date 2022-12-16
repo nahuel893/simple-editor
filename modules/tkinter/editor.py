@@ -1,13 +1,13 @@
-from time import sleep
 from tkinter.filedialog import askopenfile, asksaveasfilename
 from tkinter import Scrollbar, ttk
 import tkinter as tk
-import threading
 
-main_color = '#3a3c42'
-active_color = '#83868f'
-second_color = '#373737'
-text_color = 'white'
+# se usara sys para ubicar una carpeta superior a la actual
+import sys
+sys.path.append('/home/nahuel/Estudios/MisProyectos/simplepyeditor')
+from config.configs import settings
+from config.configs import main_color, text_color
+
 
 class EditorTab(tk.Frame):
 
@@ -31,7 +31,6 @@ class EditorTab(tk.Frame):
 
         # Atributo para saber si ya se abrio un archivo anteriormente
         self.archivo_abierto = False
-
         # Atributo de campo de texto
         self.text_box = tk.Text(
             self, 
@@ -128,31 +127,17 @@ class EditorTab(tk.Frame):
 
 class TabsContainer(ttk.Notebook):
     def __init__(self, rootwindow):
+        #style = ttk.Style()
+        #style.theme_create("my_style", parent='alt', settings=settings)
+        #    style.theme_use('my_style')
         super().__init__(rootwindow)
         self.grid(sticky='nsew')
         self.tabs_list = []
-        style = ttk.Style()
-        settings = {
-            "TNotebook": {"configure": {"background": main_color}
-                          },
-            "TNotebook.Tab": {"configure": {"padding": [5, 1],
-                                            "background": main_color,
-                                            "foreground": 'white'
-                                            },
-                              "map": {"background": [("selected", active_color),
-                                                     ("active", active_color)],
-                                      "foreground": [("selected", 'white'),
-                                                     ("active", 'white')]
-
-                                      }
-                              }
-        }
-
-        style.theme_create("mi_estilo", parent="alt", settings=settings)
-        style.theme_use("mi_estilo")
         self.rootwindow = rootwindow
+        
     def _get_current_tab(self):
         return self.tabs_list[self.index(self.select())]
+
     def isHere(self, tab):
         return tab in self.tabs_list
 
@@ -171,7 +156,7 @@ class TabsContainer(ttk.Notebook):
     def new_tab_blank(self):
         tab = EditorTab(self)
         self.tabs_list.append(tab) 
-        self.add(tab, text='New File')
+        self.add(tab, text='new file')
         return tab
     # corregido error al clickear opcion abrir pero no seleccionar ningun archivo.
     # se abria una pestaña en blanco sin titulo
@@ -188,45 +173,7 @@ class TabsContainer(ttk.Notebook):
     def set_text(self, tab, string):
         self.tab(tab, text=string)
 
-
-class Window(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.geometry('875x762')
-       
-        self.title('Text Editor')
-        self.tabs = TabsContainer(self)
-        self.tabs.new_tab_blank()
-        self._crear_menu()
-        self.grid_columnconfigure(0, weight=1)
-    def _exit(self):
-        global finish
-        finish = False
-        self.destroy()
-    def _crear_menu(self):
-        # Creamos el menu de la App
-        menu_app = tk.Menu(self, bg=main_color, fg='white',
-                           activebackground=active_color)
-        self.config(menu=menu_app)
-        # Agregamos las opciones a nuestro menu
-        # Agregamos menu archivo
-        menu_archivo = tk.Menu(
-            menu_app, tearoff=False, bg=main_color, fg='white', activebackground=active_color)
-        menu_app.add_cascade(label='Archivo', menu=menu_archivo)
-        menu_archivo.add_command(
-            label='Abrir', command=self.tabs.new_tab_file)
-        
-        menu_archivo.add_command(label='Salir', command=self._exit)
-        
-        menu_archivo.add_command(label='Guardar', command=self.tabs.save_current_tab)
-        menu_archivo.add_command(label='Guardar como...',
-                                  command=self.tabs.save_as_current_tab)
-        menu_archivo.add_command(label='Nueva Pestaña', command=self.tabs.new_tab_blank)
-        menu_archivo.add_separator()
-        menu_archivo.add_command(label='Salir', command=self.quit)
-        
-
-
 if __name__ == '__main__':
+    from window import Window
     window = Window()
     window.mainloop()
