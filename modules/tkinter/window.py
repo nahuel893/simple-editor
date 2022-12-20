@@ -11,9 +11,6 @@ class Window(tk.Tk):
         super().__init__()
         self.geometry('875x762')
         self.title('Text Editor')
-        style = ttk.Style()
-        style.theme_create("my_style", parent='alt', settings=settings)
-        style.theme_use('my_style')
         self.tabs = TabsContainer(self)
         self.tabs.new_tab_blank()
         self._crear_menu()
@@ -32,10 +29,11 @@ class Window(tk.Tk):
         menu_archivo = tk.Menu(
             menu_app, tearoff=False, bg=main_color, fg='white', activebackground=active_color)
         menu_app.add_cascade(label='Archivo', menu=menu_archivo)
+        
         menu_archivo.add_command(
             label='Abrir', command=self.tabs.new_tab_file)
+        menu_archivo.add_command(label='Cerrar archivo', command=self.tabs.close_current_file)
         
-        menu_archivo.add_command(label='Salir', command=self._exit)
         
         menu_archivo.add_command(label='Guardar', command=self.tabs.save_current_tab)
         menu_archivo.add_command(label='Guardar como...',
@@ -43,6 +41,12 @@ class Window(tk.Tk):
         menu_archivo.add_command(label='Nueva Pestaña', command=self.tabs.new_tab_blank)
         menu_archivo.add_separator()
         menu_archivo.add_command(label='Salir', command=self.quit)
+        
+        # Menu de ejecucion del codigo
+        menu_ejecutar = tk.Menu(menu_app, tearoff=False, bg=main_color,
+                        fg='white', activebackground=active_color)
+        menu_app.add_cascade(label='Ejecutar', menu=menu_ejecutar)
+        menu_ejecutar.add_command(label='Ejecutar archivo python', command=self.tabs.run_current_file)
 
 if __name__ == '__main__':
     window = Window()

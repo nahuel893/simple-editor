@@ -1,4 +1,3 @@
-
 from modules.tkinter.window import *
 
 

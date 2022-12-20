@@ -1,5 +1,5 @@
 from tkinter.filedialog import askopenfile, asksaveasfilename
-from tkinter import Scrollbar, ttk
+from tkinter import Scrollbar, ttk, messagebox
 import tkinter as tk
 
 # se usara sys para ubicar una carpeta superior a la actual
@@ -8,6 +8,7 @@ sys.path.append('/home/nahuel/Estudios/MisProyectos/simplepyeditor')
 from config.configs import settings
 from config.configs import main_color, text_color
 
+import os
 
 class EditorTab(tk.Frame):
 
@@ -22,6 +23,7 @@ class EditorTab(tk.Frame):
         # self.config(width=900, height=900)
         # Utilizaremos un atributo para darle un nombre a la pestaña
         self.name = ''
+        self.path = ''
         # Guardamos una referencia al contenedor en donde esta el obj EditorTab
         self.container = container
         self.saved = False
@@ -41,7 +43,7 @@ class EditorTab(tk.Frame):
         )
         self.text_box.grid(row=0, column=1, sticky='NSEW')
         self.text_box.config(bg=main_color, fg=text_color)
-
+        self.text_box.bind('<KeyPress>', self._check_is_saved)
         
         # Creamos una scroll bar para el campo de texto
         # scrool vertical
@@ -62,15 +64,24 @@ class EditorTab(tk.Frame):
         self._hscrollbar.grid(row=3, column=1, sticky='EW')
         self.text_box.config(xscrollcommand=self._hscrollbar.set)
 
-
-
     def _set_name(self):
+        self.path = self.archivo.name
         self.name = self.archivo.name.split('/')[-1]
         if self.container.isHere(self):
             self.container.set_text(self, self.name)
 
-    def isSaved(self):
-        pass
+    def _check_is_saved(self, event=None):
+        if self.archivo_abierto:
+            text1 = self.text_box.get()
+            with open(self.archivo_abierto, 'r+') as self.archivo:
+                text2 = self.archivo.read()
+                print(text1, '\n', text2)
+                if text1 != text2:
+                    self.saved = False
+                else:
+                    self.saved = True
+
+
 
     def open_file(self):
         # Abrimos el archivo para edicion (lectura-escritura) usando tkinter.
@@ -101,6 +112,7 @@ class EditorTab(tk.Frame):
                 self.archivo.write(texto)
                 # Cambiamos el nombre del titulo del app
                 self._set_name()
+                self.saved = True
         else:
             self.save_as()
 
@@ -127,9 +139,9 @@ class EditorTab(tk.Frame):
 
 class TabsContainer(ttk.Notebook):
     def __init__(self, rootwindow):
-        #style = ttk.Style()
-        #style.theme_create("my_style", parent='alt', settings=settings)
-        #    style.theme_use('my_style')
+        style = ttk.Style()
+        style.theme_create("my_style", parent='alt', settings=settings)
+        style.theme_use('my_style')
         super().__init__(rootwindow)
         self.grid(sticky='nsew')
         self.tabs_list = []
@@ -156,7 +168,7 @@ class TabsContainer(ttk.Notebook):
     def new_tab_blank(self):
         tab = EditorTab(self)
         self.tabs_list.append(tab) 
-        self.add(tab, text='new file')
+        self.add(tab, text='New file')
         return tab
     # corregido error al clickear opcion abrir pero no seleccionar ningun archivo.
     # se abria una pestaña en blanco sin titulo
@@ -172,6 +184,25 @@ class TabsContainer(ttk.Notebook):
 
     def set_text(self, tab, string):
         self.tab(tab, text=string)
+
+    def _save_alert(self):
+        return messagebox.askyesno('Aviso de guardado', 'Se perderan sus cambios, desea continuar?')
+
+    def close_current_file(self):
+        tab = self._get_current_tab()
+        if tab.saved or self._save_alert():
+            tab.destroy() 
+
+    def run_current_file(self):
+        tab = self._get_current_tab()
+        # tambien deberia tener en cuenta que le archivo este guardado
+        if tab.path.endswith('.py'):
+            command = 'python3 ' + tab.path
+            print('command', command)
+            os.system(command)
+
+
+
 
 if __name__ == '__main__':
     from window import Window
