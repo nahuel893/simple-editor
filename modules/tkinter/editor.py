@@ -5,7 +5,7 @@ import tkinter as tk
 # se usara sys para ubicar una carpeta superior a la actual
 import sys
 sys.path.append('/home/nahuel/Estudios/MisProyectos/simplepyeditor')
-from config.configs import settings
+from config.configs import settings, CHANGE_FLAG
 from config.configs import main_color, text_color
 
 import os
@@ -43,7 +43,7 @@ class EditorTab(tk.Frame):
         )
         self.text_box.grid(row=0, column=1, sticky='NSEW')
         self.text_box.config(bg=main_color, fg=text_color)
-        self.text_box.bind('<KeyPress>', self._check_is_saved)
+        self.text_box.bind('<KeyRelease>', self._check_is_saved)
         
         # Creamos una scroll bar para el campo de texto
         # scrool vertical
@@ -63,25 +63,38 @@ class EditorTab(tk.Frame):
                           background=main_color)
         self._hscrollbar.grid(row=3, column=1, sticky='EW')
         self.text_box.config(xscrollcommand=self._hscrollbar.set)
+    
+    # recordar agregar setters y getters de los atributos basicos
+    # * saved
+    # * path
+    # * name
 
-    def _set_name(self):
+    def _set_name(self, name=None):
         self.path = self.archivo.name
         self.name = self.archivo.name.split('/')[-1]
         if self.container.isHere(self):
             self.container.set_text(self, self.name)
 
     def _check_is_saved(self, event=None):
+
         if self.archivo_abierto:
-            text1 = self.text_box.get()
-            with open(self.archivo_abierto, 'r+') as self.archivo:
+            text1 = self.text_box.get('1.0', 'end-1c')
+            with open(self.archivo_abierto.name, 'r+') as self.archivo:
                 text2 = self.archivo.read()
                 print(text1, '\n', text2)
                 if text1 != text2:
                     self.saved = False
+                    self._set_name()
                 else:
                     self.saved = True
+                    self.container.set_text(self, self.name + CHANGE_FLAG)
+        else:
+            if self.get_text_content() != '':
+                self.container.set_text(self, self.name + CHANGE_FLAG)
 
 
+    def get_text_content(self):
+        return self.text_box.get('1.0', 'end-1c')
 
     def open_file(self):
         # Abrimos el archivo para edicion (lectura-escritura) usando tkinter.
@@ -99,6 +112,7 @@ class EditorTab(tk.Frame):
             # Insertamos todo este contenido en el campo de texto
             self.text_box.insert(1.0, texto)
             self._set_name()
+            self.saved = True
             return True
 
     def save(self):
@@ -134,6 +148,8 @@ class EditorTab(tk.Frame):
             self._set_name()
             #  Indicamos que ya hemos abierto un archivo
             self.archivo_abierto = self.archivo
+
+            self.saved = True
             return True
 
 
@@ -148,10 +164,10 @@ class TabsContainer(ttk.Notebook):
         self.rootwindow = rootwindow
         
     def _get_current_tab(self):
-        return self.tabs_list[self.index(self.select())]
+        return self.nametowidget(self.select())
 
     def isHere(self, tab):
-        return tab in self.tabs_list
+        return tab in self.tabs()
 
     def save_current_tab(self):
         current_tab = self._get_current_tab()
@@ -169,6 +185,7 @@ class TabsContainer(ttk.Notebook):
         tab = EditorTab(self)
         self.tabs_list.append(tab) 
         self.add(tab, text='New file')
+        tab.name = 'New file'
         return tab
     # corregido error al clickear opcion abrir pero no seleccionar ningun archivo.
     # se abria una pestaña en blanco sin titulo
@@ -190,8 +207,21 @@ class TabsContainer(ttk.Notebook):
 
     def close_current_file(self):
         tab = self._get_current_tab()
-        if tab.saved or self._save_alert():
-            tab.destroy() 
+        if tab.archivo_abierto:
+            if tab.saved:
+                tab.destroy()
+            else:
+                response = self._save_alert() 
+                if response:
+                    tab.destroy()
+        elif CHANGE_FLAG in tab.name:
+            response = self._save_alert()
+            if response:
+                tab.destroy()
+        else:
+            tab.destroy()
+
+                     
 
     def run_current_file(self):
         tab = self._get_current_tab()

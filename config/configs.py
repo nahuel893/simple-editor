@@ -1,5 +1,6 @@
 
-
+# Global variables
+CHANGE_FLAG = '•'
 # color configs
 main_color = '#3a3c42'
 active_color = '#83868f'
