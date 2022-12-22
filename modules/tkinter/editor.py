@@ -85,9 +85,12 @@ class EditorTab(tk.Frame):
                 if text1 != text2:
                     self.saved = False
                     self._set_name()
+                    self.container.set_text(self, self.name + CHANGE_FLAG)
                 else:
                     self.saved = True
-                    self.container.set_text(self, self.name + CHANGE_FLAG)
+                    self.container.set_text(self, self.name.replace(CHANGE_FLAG, ''))
+
+                    
         else:
             if self.get_text_content() != '':
                 self.container.set_text(self, self.name + CHANGE_FLAG)
